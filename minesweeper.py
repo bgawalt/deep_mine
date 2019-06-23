@@ -157,6 +157,7 @@ def ExpertBoard(seed=None):
 
 
 if __name__ == "__main__":
+    # Demo usage:
     easy = BeginnerGame()
 
     moves = 1
