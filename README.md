@@ -24,7 +24,8 @@ individual game of Minesweeper.
     dug" or "this cell has a flag on it."
 *   Provides a way to mark a particular (X, Y) square with a flag.
 *   Provides a way to dig at a particular (X, Y) square, and tells you whether
-    or not you died.
+    or not you died.  If your dig reveals that the cell had zero neighboring
+    mines, the game automatically digs up all its undug neighbors.
 *   If you hit a mine, you die!
 *   Also, if you try and dig in a square you've already dug, you crack through
     the earth's mantle, fall into a pit of magma, and die!  That rule might be
@@ -79,7 +80,7 @@ totally ignores any information you provide it.
 *   More and better DeepMine agents, which can read the Dig History table and
     train a `MineProbability` model.  Easy models I have in mind:
     *   Decision trees
-    *   Logistic regression
+    *   Logistic regression with some kind of polynomial kernel
     *   Anything else that seems to be just sitting around in SciKit Learn
 *   Add a method to `MinesweeperGame` that renders the current board as a PNG
 *   The Dig History table is really inefficient in terms of storing

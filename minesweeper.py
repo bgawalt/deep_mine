@@ -34,13 +34,13 @@ class MinesweeperGame(object):
         # Choose random mine positions
         random.seed(seed)
         self.mine_positions = set(
-            random.sample([(row, col) for row in xrange(num_rows)
-                           for col in xrange(num_cols)],
+            random.sample([(row, col) for row in range(num_rows)
+                           for col in range(num_cols)],
                           num_mines))
         # Precompute number of neighboring mines for each square
         # Start by every square thinking it has zero neighbors:
-        self.num_neighbors = {(row, col): 0 for row in xrange(num_rows)
-                              for col in xrange(num_cols)}
+        self.num_neighbors = {(row, col): 0 for row in range(num_rows)
+                              for col in range(num_cols)}
         # Then, for every mine, increment its neighbors' counts:
         for mine_position in self.mine_positions:
             mrow, mcol = mine_position
@@ -48,8 +48,8 @@ class MinesweeperGame(object):
                 for dcol in (mcol - 1, mcol, mcol + 1):
                     if self.ValidPosition(drow, dcol):
                         self.num_neighbors[(drow, dcol)] += 1
-        self.board = {(row, col): UNKNOWN for row in xrange(num_rows)
-                      for col in xrange(num_cols)}
+        self.board = {(row, col): UNKNOWN for row in range(num_rows)
+                      for col in range(num_cols)}
         self.dug_count = 0
         self.flag_count = 0
         # Keep track of cells dug up or flagged since the last visualization:
@@ -135,12 +135,12 @@ class MinesweeperGame(object):
         return (self.dug_count + self.flag_count) == len(self.board)
 
     def Print(self):
-        for row in xrange(self.num_rows):
-            for col in xrange(self.num_cols):
+        for row in range(self.num_rows):
+            for col in range(self.num_cols):
                 cell_value = self.board[(row,col)]
                 ch = DISPLAY_LOOKUP.get(cell_value, cell_value)
-                print ch,
-            print ''
+                print(ch, end=' ')
+            print('')
         self.recently_poked = []
 
 
@@ -164,13 +164,13 @@ if __name__ == "__main__":
     while not easy.Dead():
         row = random.randint(0, 7)
         col = random.randint(0, 7)
-        print 'Move', moves, ': [', row, ',', col, ']:',
-        print easy.num_neighbors[(row, col)]
-        print easy.Neighborhood(row, col, 1)
+        print("Move %d: [%d, %d]:" % (moves, row, col), end=" ")
+        print(easy.num_neighbors[(row, col)])
+        print(easy.Neighborhood(row, col, 1))
         if not easy.Dig(row, col):
-            print "   DIED!!\n"
+            print("   DIED!!\n")
         else:
-            print '  (... whew...)\n'
+            print('  (... whew...)\n')
         easy.Print()
-        print '\n\n'
+        print('\n\n')
         moves += 1

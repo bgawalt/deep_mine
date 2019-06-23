@@ -25,8 +25,8 @@ class DeepMine(object):
             # No current support for planting flags.
             min_prob = 1
             best_spot = None
-            for row in xrange(ms_game.num_rows):
-                for col in xrange(ms_game.num_cols):
+            for row in range(ms_game.num_rows):
+                for col in range(ms_game.num_cols):
                     neighborhood = ms_game.Neighborhood(row, col)
                     prob = self.MineProbability(neighborhood, total_mines, 0)
                     if prob <= min_prob:
@@ -36,11 +36,11 @@ class DeepMine(object):
             neighborhoods.append(ms_game.Neighborhood(br, bc))
             result = ms_game.Dig(br, bc)
             results.append(1 if result else 0)
-            print "\nMove %d: (%d, %d)\n" % (move, br, bc)
+            print("\nMove %d: (%d, %d)\n" % (move, br, bc))
             if not result:
-                print "  /!\\  DIED  /!\\ \n"
+                print("  /!\\  DIED  /!\\ \n")
             ms_game.Print()
-            print "\n"
+            print("\n")
             move += 1
         # Save neighbs, results to sqlite
         sql_values = [(",".join([str(n) for n in neighborhood]), result)
