@@ -2,6 +2,28 @@
 
 Here's me trying to teach my laptop to play Minesweeper.
 
+## Setup
+
+I'm running this on my fairly-old Macbook Pro.  I did some wrangling with
+Homebrew to get Python 3.7 running.  From there, I set up a blank virtual
+environment and installed Scikit Learn:
+
+```
+pip install -U scikit-learn
+```
+
+In total, the environment looks like:
+
+```
+$ pip freeze
+joblib==0.13.2
+numpy==1.16.4
+scikit-learn==0.21.2
+scipy==1.3.0
+```
+
+<!-- Note to self: source venv_py3/mine/bin/activate -->
+
 ## `minesweeper.py`
 
 `minesweeper.py` has a class, `MinesweeperGame`, that handles the play of an
@@ -72,6 +94,10 @@ a smart-enough agent benefitting from that capability.
 `deep_mine.py` only has one true agent implemented right now: `DeepMineRandom`.
 Its `MineProbability` method just picks random values between 0 and 1 and
 totally ignores any information you provide it.
+
+There's another class, `DeepMineLearner`, which currently has a method for
+fetching and parsing training data out of the Dig History table.  This will
+serve as a base on which ML-backed agents are implemented.
 
 ## Coming soon
 

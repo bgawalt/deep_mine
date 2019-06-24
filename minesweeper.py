@@ -6,9 +6,9 @@ import random
 # that blew you up, or else just a digit 0-9 indicating number of mines nearby.
 UNKNOWN = -1
 FLAG = -2
-MINE = -3
-LAVA = -4
-OUT_OF_BOUNDS = -5
+OUT_OF_BOUNDS = -3
+MINE = -4
+LAVA = -5
 
 # Map board values to character to print:
 DISPLAY_LOOKUP = {
@@ -18,6 +18,11 @@ DISPLAY_LOOKUP = {
     LAVA: '~',
     0: ' '
 }
+# Make sure we didn't use the same cell-enum twice.
+# TODO Although now that I'm in Py3.7, I could just use -- actual enums!!
+assert(len(DISPLAY_LOOKUP) == 5)
+
+MIN_CELL_VALUE = min(DISPLAY_LOOKUP.keys())
 
 class MinesweeperGame(object):
 
