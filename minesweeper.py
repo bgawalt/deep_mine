@@ -137,10 +137,29 @@ class MinesweeperGame(object):
         return self.dead
 
     def Won(self):
-        return (self.dug_count + self.flag_count) == len(self.board)
+        # WARNING!! IGNORES FLAGS!!
+        return (len(self.board) - self.dug_count) == self.NumMinesTotal()
 
-    def Print(self):
+    def Print(self, include_ticks=False):
+        print("Dig Count: %d" % (self.dug_count,))
+        print("Mines: %d\n" % (self.NumMinesTotal()))
+        if include_ticks:
+            print("    ", end='')
+            col = 0
+            out_str = ""
+            while col < self.num_cols:
+                if col % 3 == 0:
+                    addition = str(col)
+                    if len(addition) == 1:
+                        addition += ' '
+                else:
+                    addition = '  '
+                out_str += addition
+                col += 1
+            print(out_str, end='\n')
         for row in range(self.num_rows):
+            if include_ticks:
+                print("%02d" % (row,), end='  ')
             for col in range(self.num_cols):
                 cell_value = self.board[(row,col)]
                 ch = DISPLAY_LOOKUP.get(cell_value, cell_value)
@@ -165,17 +184,21 @@ if __name__ == "__main__":
     # Demo usage:
     easy = BeginnerGame()
 
+    print("Welcome to minesweeper!", end='\n\n')
     moves = 1
-    while not easy.Dead():
-        row = random.randint(0, 7)
-        col = random.randint(0, 7)
+    easy.Print(include_ticks=True)
+    print("\n")
+    while not easy.Dead() and not easy.Won():
+        row = int(input("Row: "))
+        col = int(input("Col: "))
         print("Move %d: [%d, %d]:" % (moves, row, col), end=" ")
         print(easy.num_neighbors[(row, col)])
-        print(easy.Neighborhood(row, col, 1))
         if not easy.Dig(row, col):
             print("   DIED!!\n")
         else:
             print('  (... whew...)\n')
-        easy.Print()
+        easy.Print(include_ticks=True)
         print('\n\n')
         moves += 1
+    if easy.Won():
+        print("YOU WIN!!!")
