@@ -6,10 +6,11 @@ Here's me trying to teach my laptop to play Minesweeper.
 
 I'm running this on my fairly-old Macbook Pro.  I did some wrangling with
 Homebrew to get Python 3.7 running.  From there, I set up a blank virtual
-environment and installed Scikit Learn:
+environment and installed Scikit Learn and Pillow:
 
 ```
 pip install -U scikit-learn
+pip install Pillow
 ```
 
 In total, the environment looks like:
@@ -18,11 +19,10 @@ In total, the environment looks like:
 $ pip freeze
 joblib==0.13.2
 numpy==1.16.4
+Pillow==6.1.0
 scikit-learn==0.21.2
 scipy==1.3.0
 ```
-
-<!-- Note to self: source venv_py3/mine/bin/activate -->
 
 ## `minesweeper.py`
 
@@ -101,7 +101,6 @@ serve as a base on which ML-backed agents are implemented.
 
 ## Coming soon
 
-*   Support a mode where a human can just play a game right on the command line.
 *   Support flag-planting on the part of the agents
 *   More and better DeepMine agents, which can read the Dig History table and
     train a `MineProbability` model.  Easy models I have in mind:

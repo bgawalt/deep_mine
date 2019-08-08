@@ -1,4 +1,4 @@
-
+import sys
 import random
 
 # Handy lil enum codes for cell values.
@@ -144,7 +144,7 @@ class MinesweeperGame(object):
         print("Dig Count: %d" % (self.dug_count,))
         print("Mines: %d\n" % (self.NumMinesTotal()))
         if include_ticks:
-            print("    ", end='')
+            print(" " * (len(str(self.num_rows)) + 2), end='')
             col = 0
             out_str = ""
             while col < self.num_cols:
@@ -159,12 +159,27 @@ class MinesweeperGame(object):
             print(out_str, end='\n')
         for row in range(self.num_rows):
             if include_ticks:
-                print("%02d" % (row,), end='  ')
+                n = len(str(self.num_rows))
+                print(("%d" % (row,)).rjust(n), end='  ')
             for col in range(self.num_cols):
                 cell_value = self.board[(row,col)]
                 ch = DISPLAY_LOOKUP.get(cell_value, cell_value)
                 print(ch, end=' ')
             print('')
+        if include_ticks:
+            print(" " * (len(str(self.num_rows)) + 2), end='')
+            col = 0
+            out_str = ""
+            while col < self.num_cols:
+                if col % 3 == 0:
+                    addition = str(col)
+                    if len(addition) == 1:
+                        addition += ' '
+                else:
+                    addition = '  '
+                out_str += addition
+                col += 1
+            print(out_str, end='\n')
         self.recently_poked = []
 
 
@@ -176,13 +191,18 @@ def IntermediateGame(seed=None):
     return MinesweeperGame(16, 16, 40)
 
 
-def ExpertBoard(seed=None):
+def ExpertGame(seed=None):
     return MinesweeperGame(24, 24, 99)
 
 
 if __name__ == "__main__":
     # Demo usage:
-    easy = BeginnerGame()
+    if 'm' in sys.argv:
+        easy = IntermediateGame()
+    elif 'h' in sys.argv:
+        easy = ExpertGame()
+    else:
+        easy = BeginnerGame()
 
     print("Welcome to minesweeper!", end='\n\n')
     moves = 1
