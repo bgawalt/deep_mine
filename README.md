@@ -29,6 +29,21 @@ scipy==1.3.0
 `minesweeper.py` has a class, `MinesweeperGame`, that handles the play of an
 individual game of Minesweeper.
 
+But it also has a `main()` routine, too, so you can just start playing
+Minesweeper in the console:
+
+```
+$ python minesweeper.py [difficulty]
+```
+
+where using the character `m` for `difficulty` launches a medium-difficulty
+game, and `h` launches a hard game. (Any other character, or omitting the
+character, launches the default: an easy game.)  It will ask you for one integer
+at a time, Row, then Col, to pick a place to dig.  You can't plant flags, so
+just dig up all the not-mine spots till you win.
+
+Some more details on the `MinesweeperGame`
+
 *   Games are initialized with a board size and number of mines, and some
     helper methods provide Beginner, Intermediate, and Expert defaults.
     You can also provide a seed value to control the random placement of mines.

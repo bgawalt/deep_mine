@@ -1,3 +1,13 @@
+"""Library defining Minesweeper game, with main() letting you play it.
+
+To play a game, optionally add 'm' or 'h' to your command line arguments:
+
+$ python minesweeper.py {m | h}
+
+That will let you play a _m_edium or _h_ard board (and will otherwise have you
+play an easy board).
+"""
+
 import sys
 import random
 
@@ -59,6 +69,18 @@ class MinesweeperGame(object):
         self.flag_count = 0
         # Keep track of cells dug up or flagged since the last visualization:
         self.recently_poked = []
+
+    @staticmethod
+    def Beginner(seed=None):
+        return MinesweeperGame(8, 8, 10, seed)
+
+    @staticmethod
+    def Intermediate(seed=None):
+        return MinesweeperGame(16, 16, 40, seed)
+
+    @staticmethod
+    def Expert(seed=None):
+        return MinesweeperGame(24, 24, 99, seed)
 
     def ValidPosition(self, row, col):
         return 0 <= row < self.num_rows and 0 <= col < self.num_cols
@@ -183,42 +205,30 @@ class MinesweeperGame(object):
         self.recently_poked = []
 
 
-def BeginnerGame(seed=None):
-    return MinesweeperGame(8, 8, 10)
-
-
-def IntermediateGame(seed=None):
-    return MinesweeperGame(16, 16, 40)
-
-
-def ExpertGame(seed=None):
-    return MinesweeperGame(24, 24, 99)
-
-
 if __name__ == "__main__":
     # Demo usage:
     if 'm' in sys.argv:
-        easy = IntermediateGame()
+        ms_game = MinesweeperGame.Intermediate()
     elif 'h' in sys.argv:
-        easy = ExpertGame()
+        ms_game = MinesweeperGame.Expert()
     else:
-        easy = BeginnerGame()
+        ms_game = MinesweeperGame.Beginner()
 
     print("Welcome to minesweeper!", end='\n\n')
     moves = 1
-    easy.Print(include_ticks=True)
+    ms_game.Print(include_ticks=True)
     print("\n")
-    while not easy.Dead() and not easy.Won():
+    while not ms_game.Dead() and not ms_game.Won():
         row = int(input("Row: "))
         col = int(input("Col: "))
         print("Move %d: [%d, %d]:" % (moves, row, col), end=" ")
-        print(easy.num_neighbors[(row, col)])
-        if not easy.Dig(row, col):
+        print(ms_game.num_neighbors[(row, col)])
+        if not ms_game.Dig(row, col):
             print("   DIED!!\n")
         else:
             print('  (... whew...)\n')
-        easy.Print(include_ticks=True)
+        ms_game.Print(include_ticks=True)
         print('\n\n')
         moves += 1
-    if easy.Won():
+    if ms_game.Won():
         print("YOU WIN!!!")
