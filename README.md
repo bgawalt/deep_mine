@@ -39,8 +39,9 @@ $ python minesweeper.py [difficulty]
 where using the character `m` for `difficulty` launches a medium-difficulty
 game, and `h` launches a hard game. (Any other character, or omitting the
 character, launches the default: an easy game.)  It will ask you for one integer
-at a time, Row, then Col, to pick a place to dig.  You can't plant flags, so
-just dig up all the not-mine spots till you win.
+at a time, Row, then Col, to pick a place to dig.  (Rows and columns are
+zero-indexed.)  You can't plant flags, so just dig up all the not-mine spots
+till you win.
 
 Some more details on the `MinesweeperGame`
 

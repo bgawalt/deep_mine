@@ -8,31 +8,26 @@ That will let you play a _m_edium or _h_ard board (and will otherwise have you
 play an easy board).
 """
 
+import enum
 import sys
 import random
 
-# Handy lil enum codes for cell values.
-# When displaying a board, you might show an undug cell, a flag, a mine
-# that blew you up, or else just a digit 0-9 indicating number of mines nearby.
-UNKNOWN = -1
-FLAG = -2
-OUT_OF_BOUNDS = -3
-MINE = -4
-LAVA = -5
+@enum.unique
+class CellValue(enum.Enum):
+    """Non-numeric values that can be held by a game cell."""
+    UNKNOWN = '.'
+    FLAG = 'F'
+    OUT_OF_BOUNDS = 'x'
+    MINE = '#'
+    LAVA = '~'
 
-# Map board values to character to print:
-DISPLAY_LOOKUP = {
-    UNKNOWN: '.',
-    FLAG: 'F',
-    MINE: '#',
-    LAVA: '~',
-    0: ' '
-}
-# Make sure we didn't use the same cell-enum twice.
-# TODO Although now that I'm in Py3.7, I could just use -- actual enums!!
-assert(len(DISPLAY_LOOKUP) == 5)
 
-MIN_CELL_VALUE = min(DISPLAY_LOOKUP.keys())
+def _DisplayCell(cell_value):
+    """Single character to display for the given cell_value."""
+    if isinstance(cell_value, CellValue):
+        return cell_value.value
+    return ' ' if cell_value == 0 else str(cell_value)
+
 
 class MinesweeperGame(object):
 
@@ -54,7 +49,8 @@ class MinesweeperGame(object):
                           num_mines))
         # Precompute number of neighboring mines for each square
         # Start by every square thinking it has zero neighbors:
-        self.num_neighbors = {(row, col): 0 for row in range(num_rows)
+        self.num_neighbors = {(row, col): 0
+                              for row in range(num_rows)
                               for col in range(num_cols)}
         # Then, for every mine, increment its neighbors' counts:
         for mine_position in self.mine_positions:
@@ -63,7 +59,8 @@ class MinesweeperGame(object):
                 for dcol in (mcol - 1, mcol, mcol + 1):
                     if self.ValidPosition(drow, dcol):
                         self.num_neighbors[(drow, dcol)] += 1
-        self.board = {(row, col): UNKNOWN for row in range(num_rows)
+        self.board = {(row, col): CellValue.UNKNOWN
+                      for row in range(num_rows)
                       for col in range(num_cols)}
         self.dug_count = 0
         self.flag_count = 0
@@ -88,7 +85,7 @@ class MinesweeperGame(object):
     def PlantFlag(self, row, col):
         if not self.ValidPosition(row, col):
             raise ValueError("Can't plant a flag outside the board")
-        self.board[(row, col)] = FLAG
+        self.board[(row, col)] = CellValue.FLAG
         self.flag_count += 1
         self.recently_poked.append(row, col)
 
@@ -100,15 +97,16 @@ class MinesweeperGame(object):
             # sure.  just dig wherever.  no mines outside the board anyway.
             return True
         if (row, col) in self.mine_positions:
-            self.board[(row, col)] = MINE
+            self.board[(row, col)] = CellValue.MINE
             self.dead = True
             return False
-        if self.board[(row, col)] != UNKNOWN:
-            self.board[(row, col)] = LAVA
+        if self.board[(row, col)] != CellValue.UNKNOWN:
+            self.board[(row, col)] = CellValue.LAVA
             self.dead = True
             return False
         neighbors = self.num_neighbors[(row, col)]
         self.board[(row, col)] = neighbors
+        # If no neighboring cells are mines, dig up all those cells, too:
         if neighbors == 0:
             # Explore all neighbors
             seen = set()
@@ -117,7 +115,7 @@ class MinesweeperGame(object):
                 for dcol in (col - 1, col, col + 1):
                     if not self.ValidPosition(drow, dcol):
                         continue
-                    if self.board[(drow, dcol)] == UNKNOWN:
+                    if self.board[(drow, dcol)] == CellValue.UNKNOWN:
                         to_dig.append((drow, dcol))
             while len(to_dig) > 0:
                 nrow, ncol = to_dig.pop()
@@ -132,7 +130,7 @@ class MinesweeperGame(object):
                         for dcol in (ncol - 1, ncol, ncol + 1):
                             if not self.ValidPosition(drow, dcol):
                                 continue
-                            if self.board[(drow, dcol)] == UNKNOWN:
+                            if self.board[(drow, dcol)] == CellValue.UNKNOWN:
                                 to_dig.append((drow, dcol))
         self.dug_count += 1
         self.recently_poked.append((row, col))
@@ -146,7 +144,7 @@ class MinesweeperGame(object):
                 if self.ValidPosition(drow, dcol):
                     vals.append(self.board[(drow, dcol)])
                 else:
-                    vals.append(OUT_OF_BOUNDS)
+                    vals.append(CellValue.OUT_OF_BOUNDS)
         return vals
 
     def NumUnflagged(self):
@@ -165,6 +163,7 @@ class MinesweeperGame(object):
     def Print(self, include_ticks=False):
         print("Dig Count: %d" % (self.dug_count,))
         print("Mines: %d\n" % (self.NumMinesTotal()))
+        # Print a row of ticks above the board:
         if include_ticks:
             print(" " * (len(str(self.num_rows)) + 2), end='')
             col = 0
@@ -180,14 +179,16 @@ class MinesweeperGame(object):
                 col += 1
             print(out_str, end='\n')
         for row in range(self.num_rows):
+            # Print a single tick to the left of the board:
             if include_ticks:
                 n = len(str(self.num_rows))
                 print(("%d" % (row,)).rjust(n), end='  ')
             for col in range(self.num_cols):
                 cell_value = self.board[(row,col)]
-                ch = DISPLAY_LOOKUP.get(cell_value, cell_value)
+                ch = _DisplayCell(cell_value)
                 print(ch, end=' ')
             print('')
+        # Print a row of ticks below the board:
         if include_ticks:
             print(" " * (len(str(self.num_rows)) + 2), end='')
             col = 0
@@ -214,7 +215,7 @@ if __name__ == "__main__":
     else:
         ms_game = MinesweeperGame.Beginner()
 
-    print("Welcome to minesweeper!", end='\n\n')
+    print("Welcome to minesweeper!", end="\n\n")
     moves = 1
     ms_game.Print(include_ticks=True)
     print("\n")
@@ -228,7 +229,7 @@ if __name__ == "__main__":
         else:
             print('  (... whew...)\n')
         ms_game.Print(include_ticks=True)
-        print('\n\n')
+        print("\n\n")
         moves += 1
     if ms_game.Won():
         print("YOU WIN!!!")
