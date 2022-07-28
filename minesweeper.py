@@ -15,17 +15,24 @@ import random
 @enum.unique
 class CellValue(enum.Enum):
     """Non-numeric values that can be held by a game cell."""
-    UNKNOWN = '.'
-    FLAG = 'F'
-    OUT_OF_BOUNDS = 'x'
-    MINE = '#'
-    LAVA = '~'
+    UNKNOWN = (".", "⬜", -1)
+    FLAG = ("F", "🚩", -2)
+    OUT_OF_BOUNDS = ("x", "x", -3)
+    MINE = ("#", "💣", -4)
+    LAVA = ("~", "🔥", -5)
+
+    def __int__(self):
+        return self.value[2]
+
+_NUMERIC_EMOJI = ["🟦", "1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣"]
 
 
-def _DisplayCell(cell_value):
+def _DisplayCell(cell_value, use_emoji=False):
     """Single character to display for the given cell_value."""
     if isinstance(cell_value, CellValue):
-        return cell_value.value
+        return cell_value.value[1] # if use_emoji else 0]
+    if use_emoji:
+        return _NUMERIC_EMOJI[cell_value]
     return ' ' if cell_value == 0 else str(cell_value)
 
 
@@ -138,13 +145,14 @@ class MinesweeperGame(object):
 
     def Neighborhood(self, row, col, radius=2):
         """Row-major ordering of what the board looks like centered at (r, c)"""
+        # Returns list of ints representing cell values.
         vals = []
         for drow in range(row - radius, row + radius + 1):
             for dcol in range(col - radius, col + radius + 1):
                 if self.ValidPosition(drow, dcol):
-                    vals.append(self.board[(drow, dcol)])
+                    vals.append(int(self.board[(drow, dcol)]))
                 else:
-                    vals.append(CellValue.OUT_OF_BOUNDS)
+                    vals.append(int(CellValue.OUT_OF_BOUNDS))
         return vals
 
     def NumUnflagged(self):
@@ -184,7 +192,7 @@ class MinesweeperGame(object):
                 n = len(str(self.num_rows))
                 print(("%d" % (row,)).rjust(n), end='  ')
             for col in range(self.num_cols):
-                cell_value = self.board[(row,col)]
+                cell_value = self.board[(row, col)]
                 ch = _DisplayCell(cell_value)
                 print(ch, end=' ')
             print('')
@@ -204,6 +212,15 @@ class MinesweeperGame(object):
                 col += 1
             print(out_str, end='\n')
         self.recently_poked = []
+
+    def TweetContents(self):
+        """Returns a game board string fit for tweeting."""
+        tweet_board = ""
+        for row_id in range(self.num_rows):
+            row = [_DisplayCell(self.board[(row_id, col_id)], use_emoji=True)
+                   for col_id in range(self.num_cols)]
+            tweet_board += ("".join(row) + "\n")
+        return tweet_board
 
 
 if __name__ == "__main__":

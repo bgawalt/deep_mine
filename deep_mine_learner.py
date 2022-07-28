@@ -1,4 +1,5 @@
 import deep_mine
+import minesweeper
 
 from scipy import sparse
 
@@ -11,7 +12,7 @@ def FeaturizeNeighborhoodSparse(neighborhood_csv):
     """Returns list of active/one-hot column IDs."""
     cell_values = [int(n) for n in neighborhood_csv.split(",")]
     # OUT_OF_BOUNDS is the lowest-valued cell-contents code
-    return [(12 * i) + ci + minesweeper.OUT_OF_BOUNDS
+    return [(12 * i) + ci + int(minesweeper.CellValue.OUT_OF_BOUNDS)
             for i, ci in enumerate(cell_values)]
 
 
