@@ -174,8 +174,8 @@ class MinesweeperGame(object):
         return (len(self.board) - self.dug_count) == self.NumMinesTotal()
 
     def Print(self, include_ticks=False):
-        print("Dig Count: %d" % (self.dug_count,))
-        print("Mines: %d\n" % (self.NumMinesTotal()))
+        print(f"Dig Count: {self.dug_count}")
+        print(f"Mines: {self.NumMinesTotal()}\n")
         # Print a row of ticks above the board:
         if include_ticks:
             print(" " * (len(str(self.num_rows)) + 2), end='')
@@ -244,7 +244,7 @@ if __name__ == "__main__":
     while not ms_game.Dead() and not ms_game.Won():
         row = int(input("Row: "))
         col = int(input("Col: "))
-        print("Move %d: [%d, %d]:" % (moves, row, col), end=" ")
+        print(f"Move {moves}: [{row}, {col}]:", end=" ")
         print(ms_game.num_neighbors[(row, col)])
         if not ms_game.Dig(row, col):
             print("   DIED!!\n")
