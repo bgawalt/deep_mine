@@ -24,13 +24,18 @@ class CellValue(enum.Enum):
     def __int__(self):
         return self.value[2]
 
-_NUMERIC_EMOJI = ["🟦", "1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣"]
-
+_NUMERIC_EMOJI = tuple(["🟦", "1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣"])
+_TWEET_ROW_INDICES = tuple(chr(0x1f1e6 + i) for i in range(8))
+_TWEET_COL_HEADER = (
+    "🟦" +
+    "".join(chr(u) for u in
+            (0x1f1ee, 0x1f1ef, 0x1f1f0, 0x1f1f1,
+             0x1f1f3, 0x1f1f6, 0x1f1f7, 0x1f1f9)) + "\n")
 
 def _DisplayCell(cell_value, use_emoji=False):
     """Single character to display for the given cell_value."""
     if isinstance(cell_value, CellValue):
-        return cell_value.value[1] # if use_emoji else 0]
+        return cell_value.value[1 if use_emoji else 0]
     if use_emoji:
         return _NUMERIC_EMOJI[cell_value]
     return ' ' if cell_value == 0 else str(cell_value)
@@ -215,11 +220,11 @@ class MinesweeperGame(object):
 
     def TweetContents(self):
         """Returns a game board string fit for tweeting."""
-        tweet_board = ""
+        tweet_board = _TWEET_COL_HEADER
         for row_id in range(self.num_rows):
             row = [_DisplayCell(self.board[(row_id, col_id)], use_emoji=True)
                    for col_id in range(self.num_cols)]
-            tweet_board += ("".join(row) + "\n")
+            tweet_board += (_TWEET_ROW_INDICES[row_id] + "".join(row) + "\n")
         return tweet_board
 
 
