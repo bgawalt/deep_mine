@@ -15,7 +15,7 @@ import random
 @enum.unique
 class CellValue(enum.Enum):
     """Non-numeric values that can be held by a game cell."""
-    UNKNOWN = (".", "⬜", -1)
+    UNKNOWN = (".", "🟩", -1)
     FLAG = ("F", "🚩", -2)
     OUT_OF_BOUNDS = ("x", "x", -3)
     MINE = ("#", "💣", -4)
@@ -24,7 +24,7 @@ class CellValue(enum.Enum):
     def __int__(self):
         return self.value[2]
 
-_NUMERIC_EMOJI = tuple(["🟦", "1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣"])
+_NUMERIC_EMOJI = tuple(["🟫", "1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣"])
 _TWEET_ROW_INDICES = tuple(chr(0x1f1e6 + i) for i in range(8))
 _TWEET_COL_HEADER = (
     "🟦" +
@@ -146,6 +146,9 @@ class MinesweeperGame(object):
                                 to_dig.append((drow, dcol))
         self.dug_count += 1
         self.recently_poked.append((row, col))
+        if self.Won():
+            for mrow, mcol in self.mine_positions:
+                self.board[(mrow, mcol)] = CellValue.FLAG
         return True
 
     def Neighborhood(self, row, col, radius=2):
@@ -240,6 +243,7 @@ if __name__ == "__main__":
     print("Welcome to minesweeper!", end="\n\n")
     moves = 1
     ms_game.Print(include_ticks=True)
+    print(ms_game.TweetContents())
     print("\n")
     while not ms_game.Dead() and not ms_game.Won():
         row = int(input("Row: "))
@@ -251,6 +255,7 @@ if __name__ == "__main__":
         else:
             print('  (... whew...)\n')
         ms_game.Print(include_ticks=True)
+        print(ms_game.TweetContents())
         print("\n\n")
         moves += 1
     if ms_game.Won():
