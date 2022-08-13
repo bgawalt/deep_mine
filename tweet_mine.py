@@ -276,15 +276,6 @@ def update_game_state(db_cursor: sqlite3.Cursor,
 def main():
     flags = CommandLineFlags.from_argv(sys.argv)
     oauth = oauth_from_config_file(flags.oauth_config_filename)
-    # Tweet 1/2:
-    request_data = {'status': f'TEST 1/2: The gridpoint was {sys.argv[-1]}'}
-    req = requests.post(url=POST_TWEET_URL, data=request_data, auth=oauth)
-    first_tweet_id = req.json().get('id_str', None)
-    # Tweet 2/2:
-    request_data = {'status': f'TEST 2/2: The db file was {sys.argv[1]}',
-                    'in_reply_to_status_id': first_tweet_id,
-                    'auto_populate_reply_metadata': True}
-    req = requests.post(url=POST_TWEET_URL, data=request_data, auth=oauth)
 
     db_conn = sqlite3.connect(flags.sqlite_filename)
     db_cursor = db_conn.cursor()
