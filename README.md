@@ -1,6 +1,15 @@
 # DeepMine
 
-Here's me trying to teach my laptop to play Minesweeper.
+A suite that takes the game of
+[Minesweeper](https://en.wikipedia.org/wiki/Minesweeper_(video_game)) and:
+
+1.  Play it on the command line
+2.  Play it on Twitter
+3.  Machine-learn an agent that can play on its own
+
+The original goal was (3) but it turns out (1) and (2) were fun waypoints to
+explore and build out!  So (1) is done, but (2) and (3) are still
+works-in-progress.
 
 ## Setup
 
@@ -69,6 +78,15 @@ Some more details on the `MinesweeperGame`
     the earth's mantle, fall into a pit of magma, and die!  That rule might be
     unique to this implementation.
 *   Provides a way to print the current board to the command line.
+
+
+## `tweet_mind.py`
+
+The file `tweet_mind.py` provides a way to play Minesweeper on a Twitter
+account.
+
+See the file-level docstring for details on how this works. (I'll copy details
+here once everything's "production ready.")
 
 
 ## `deep_mine.py`
