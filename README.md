@@ -3,9 +3,9 @@
 A suite that takes the game of
 [Minesweeper](https://en.wikipedia.org/wiki/Minesweeper_(video_game)) and:
 
-1.  Play it on the command line
-2.  Play it on Twitter
-3.  Machine-learn an agent that can play on its own
+1.  Plays it on the command line
+2.  Plays it on Twitter
+3.  Machine-learns an agent that can play on its own
 
 The original goal was (3) but it turns out (1) and (2) were fun waypoints to
 explore and build out!  So (1) is done, but (2) and (3) are still
