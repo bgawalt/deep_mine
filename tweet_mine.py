@@ -150,9 +150,16 @@ from __future__ import annotations
 
 import dataclasses
 import enum
+import json
+import requests
+import requests_oauthlib
 import sys
 
 from collections.abc import Sequence
+
+
+# Where to send tweets:
+POST_TWEET_URL = 'https://api.twitter.com/1.1/statuses/update.json'
 
 
 @enum.unique
@@ -166,8 +173,8 @@ class Command(enum.Enum):
 @dataclasses.dataclass(frozen=True)
 class CommandLineFlags():
     """Instructions passed in to this job at runtime, lightly parsed."""
-    sqlite_filename: str
-    oauth_config_filename: str
+    sqlite_filename: str  # TODO: Use pathlib
+    oauth_config_filename: str  # TODO: Use pathlib
     player: str
     command: Command
     gridpoint_row: int  # If digging or flagging, must be in range [0, 7]
@@ -215,9 +222,30 @@ class CommandLineFlags():
         )
 
 
+def oauth_from_config_file(config_filename: str) -> requests_oauthlib.OAuth1:
+    with open(config_filename) as infile:
+        config = json.load(infile)
+    return requests_oauthlib.OAuth1(
+        client_key=config['consumer_key'],
+        client_secret=config['consumer_secret'],
+        resource_owner_key=config['access_key'],
+        resource_owner_secret=config['access_secret']
+    )
+
+
 def main():
     flags = CommandLineFlags.from_argv(sys.argv)
-    print(flags)
+    oauth = oauth_from_config_file(flags.oauth_config_filename)
+    # Tweet 1/2:
+    request_data = {'status': f'TEST 1/2: The gridpoint was {sys.argv[-1]}'}
+    req = requests.post(url=POST_TWEET_URL, data=request_data, auth=oauth)
+    first_tweet_id = req.json().get('id_str', None)
+    # Tweet 2/2:
+    request_data = {'status': f'TEST 2/2: The db file was {sys.argv[1]}',
+                    'in_reply_to_status_id': first_tweet_id,
+                    'auto_populate_reply_metadata': True}
+    req = requests.post(url=POST_TWEET_URL, data=request_data, auth=oauth)
+
 
 
 if __name__ == "__main__":
