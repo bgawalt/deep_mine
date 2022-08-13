@@ -6,6 +6,8 @@ $ python minesweeper.py {m | h}
 
 That will let you play a _m_edium or _h_ard board (and will otherwise have you
 play an easy board).
+
+TODO: Upgrade style to use snake_case for functions/methods.
 """
 
 import enum

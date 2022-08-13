@@ -144,5 +144,79 @@ symbols.  So instead, it's N then Q!)
     the results of the sweep command
 """
 
+from __future__ import annotations
+
+import dataclasses
+import enum
+import sys
+
+from collections.abc import Sequence
+
+
+@enum.unique
+class Command(enum.Enum):
+    """A command for updating state of the minesweeper game."""
+    NEW = 'NEW'
+    DIG = 'DIG'
+    FLAG = 'FLAG'
+
+
+@dataclasses.dataclass(frozen=True)
+class CommandLineFlags():
+    """Instructions passed in to this job at runtime, lightly parsed."""
+    sqlite_filename: str
+    oauth_config_filename: str
+    player: str
+    command: Command
+    gridpoint_row: int  # If digging or flagging, must be in range [0, 7]
+    gridpoint_col: int  # If digging or flagging, must be in range [0, 7]
+
+    def __post_init__(self):
+        if self.command is not Command.NEW:
+            if self.gridpoint_row < 0 or self.gridpoint_row > 8:
+                raise ValueError(
+                    f"gridpoint_row out of bounds: {self.gridpoint_row}")
+            if self.gridpoint_col < 0 or self.gridpoint_col > 8:
+                raise ValueError(
+                    f"gridpoint_row out of bounds: {self.gridpoint_col}")
+
+    @classmethod
+    def from_argv(cls, argv: Sequence[str]) -> CommandLineFlags:
+        """Parses system arguments into CommandLineFlags object."""
+        if len(argv) != 6:
+            raise ValueError(
+                f"Incorrect number of command line arguments: {argv}")
+        _, sqlfile, oauthfile, player, cmd_str, grid = argv
+        try:
+            command = Command[cmd_str.upper()]
+        except KeyError:
+            raise ValueError(f'Invalid command arg: {cmd_str}')
+        if command is Command.NEW:
+            g_row = -1
+            g_col = -1
+        else:
+            if len(grid) != 3:
+                raise ValueError(f"Invalid gridpoint arg: {grid} (bad length)")
+            if grid[1] != ",":
+                raise ValueError(
+                    f"Invalid gridpoint arg: {grid} (missing comma)")
+            row_ch, col_ch = grid.lower().split(",")
+            g_row = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'].index(row_ch)
+            g_col = ['i', 'j', 'k', 'l', 'n', 'q', 'r', 't'].index(col_ch)
+        return CommandLineFlags(
+            sqlite_filename=sqlfile,
+            oauth_config_filename=oauthfile,
+            player=player,
+            command=command,
+            gridpoint_row = g_row,
+            gridpoint_col = g_col
+        )
+
+
 def main():
-    raise NotImplementedError("C'mon, man.")
+    flags = CommandLineFlags.from_argv(sys.argv)
+    print(flags)
+
+
+if __name__ == "__main__":
+    main()
