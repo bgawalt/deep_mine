@@ -221,8 +221,8 @@ class MinesweeperGame(object):
             print(out_str, end='\n')
         self.recently_poked = []
 
-    def TweetContents(self):
-        """Returns a game board string fit for tweeting."""
+    def AsEmoji(self):
+        """Returns a game board rendered as emoji."""
         tweet_board = _TWEET_COL_HEADER
         for row_id in range(self.num_rows):
             row = [_DisplayCell(self.board[(row_id, col_id)], use_emoji=True)
@@ -243,7 +243,7 @@ if __name__ == "__main__":
     print("Welcome to minesweeper!", end="\n\n")
     moves = 1
     ms_game.Print(include_ticks=True)
-    print(ms_game.TweetContents())
+    print(ms_game.AsEmoji())
     print("\n")
     while not ms_game.Dead() and not ms_game.Won():
         row = int(input("Row: "))
@@ -255,7 +255,7 @@ if __name__ == "__main__":
         else:
             print('  (... whew...)\n')
         ms_game.Print(include_ticks=True)
-        print(ms_game.TweetContents())
+        print(ms_game.AsEmoji())
         print("\n\n")
         moves += 1
     if ms_game.Won():
