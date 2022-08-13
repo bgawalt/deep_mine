@@ -80,9 +80,9 @@ Some more details on the `MinesweeperGame`
 *   Provides a way to print the current board to the command line.
 
 
-## `tweet_mind.py`
+## `tweet_mine.py`
 
-The file `tweet_mind.py` provides a way to play Minesweeper on a Twitter
+The file `tweet_mine.py` provides a way to play Minesweeper on a Twitter
 account.
 
 See the file-level docstring for details on how this works. (I'll copy details
