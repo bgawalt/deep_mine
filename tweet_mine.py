@@ -251,6 +251,7 @@ def oauth_from_config_file(config_filename: str) -> requests_oauthlib.OAuth1:
         resource_owner_secret=config['access_secret']
     )
 
+
 def initialize_game_state(db_cursor: sqlite3.Cursor) -> None:
     """Creates the game state table, or dies trying."""
     try:
@@ -259,6 +260,7 @@ def initialize_game_state(db_cursor: sqlite3.Cursor) -> None:
         raise RuntimeError(
         "Seems like you tried initializing a game via 'NEW' on a DB file"
         "that already has a game going.") from op_err
+
 
 def update_game_state(db_cursor: sqlite3.Cursor,
                       move_id: int,
