@@ -38,11 +38,13 @@ $ python tweet_mine.py \
         *  'new': Initialize the game by creating a table in the SQLite file
         *  'dig': Make a game move by digging at the given grid point
         *  'flag': Make a game move by planting a flag at the given grid point
+        *  (matching is case-insensitive)
 *  `gridpoint`: A three-character string, where the middle character is a comma,
         of format 'r,c', where 'r' (row) and 'c' (col) have the following valid
         values:
         *  'r' in [a, b, c, d, e, f, g, h]
         *  'c' in [i, j, k, l, n, q, r, t]
+        *  (lookup is case-insensitive; 'A,t' and 'f,N' both work fine.)
         *  (See "About the row/column labels" below to make this make sense!)
 
 TODO: Positional flags are fragile but easy to code up; migrate to argparse or
