@@ -317,6 +317,7 @@ def load_game_state(db_cursor: sqlite3.Cursor,
 
 def apply_move(ms_game: minesweeper.MinesweeperGame, command: Command,
                gridpoint_row: int, gridpoint_col: int) -> None:
+    """Updates ms_game according to given command."""
     if command is Command.DIG:
         ms_game.Dig(gridpoint_row, gridpoint_col)
     elif command is Command.FLAG:
