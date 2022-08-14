@@ -13,20 +13,23 @@ to perform one move in the game (with details on each flag below):
 
 ```
 $ python tweet_mine.py \
-    sqilte_file.db \
+    sqilte_file123.db \
     oauth_config.json \
     player \
     command \
     gridpoint
 ```
 
-*  `sqlite_file.db`: A file to be used as a SQLite3 database for this game.
+*  `sqlite_file123.db`: A file to be used as a SQLite3 database for this game.
         It will track the moves issued so far, and the name of this file is
         the basis for the seed value used to initially place the mines.
         *  When `command` is 'new', this file should not exist (i.e, the file
             will be created by this job).
         *  Otherwise, this job expects exactly one table to exist in the
             database.  See "The Database" below for details.
+        *  For embarassingly hacky reasons: this filename *must contain* some
+           digits -- these digits are extracted and used as a "Game #123"
+           identifier when tweeting out the game board state.
 *  `oauth_config.json`: A JSON file that contains OAuth2 credentials for posting
         to a Twitter account. Expects string fields of:
         *  'consumer_key'
@@ -161,6 +164,10 @@ import sys
 from collections.abc import Sequence
 
 
+# ASCII form of the game board's row and column header letters:
+_ROW_HEADERS = ('a', 'b', 'c', 'd', 'e', 'f', 'g', 'h')
+_COL_HEADERS = ('i', 'j', 'k', 'l', 'n', 'q', 'r', 't')
+
 # Where to send tweets:
 POST_TWEET_URL = 'https://api.twitter.com/1.1/statuses/update.json'
 
@@ -191,6 +198,21 @@ _FETCH_GAME_MOVES_QUERY = """
     ORDER BY move_id;
 """
 
+_WELCOME_TWEET_TEMPLATE = """Welcome to #Minesweeper, Game {game_num}!
+
+To play along, reply to this thread with instructions like 'dig at A,N'
+or 'flag at B,Q'.
+
+"""
+
+_MOVE_TWEET_TEMPLATE = """#Minesweeper Game {game_num}, Move {move_num}:
+   @{player} says: '{cmd} at {row}, {col}!'
+
+{maybe_kaboom}
+"""
+
+_COUNTS_TEMPLATE = """{num_mines} mines; {num_flags} flags placed:\n"""
+
 
 @enum.unique
 class Command(enum.Enum):
@@ -211,6 +233,10 @@ class CommandLineFlags():
     gridpoint_col: int  # If digging or flagging, must be in range [0, 7]
 
     def __post_init__(self):
+        try:
+            self.game_num()
+        except ValueError:
+            raise ValueError(f"No digits found in {self.sqlite_filename}")
         if self.command is not Command.NEW:
             if self.gridpoint_row < 0 or self.gridpoint_row > 8:
                 raise ValueError(
@@ -218,6 +244,9 @@ class CommandLineFlags():
             if self.gridpoint_col < 0 or self.gridpoint_col > 8:
                 raise ValueError(
                     f"gridpoint_row out of bounds: {self.gridpoint_col}")
+
+    def game_num(self) -> int:
+        return int("".join(ch for ch in self.sqlite_filename if ch.isdigit()))
 
     @classmethod
     def from_argv(cls, argv: Sequence[str]) -> CommandLineFlags:
@@ -240,8 +269,8 @@ class CommandLineFlags():
                 raise ValueError(
                     f"Invalid gridpoint arg: {grid} (missing comma)")
             row_ch, col_ch = grid.lower().split(",")
-            g_row = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'].index(row_ch)
-            g_col = ['i', 'j', 'k', 'l', 'n', 'q', 'r', 't'].index(col_ch)
+            g_row = _ROW_HEADERS.index(row_ch)
+            g_col = _COL_HEADERS.index(col_ch)
         return CommandLineFlags(
             sqlite_filename=sqlfile,
             oauth_config_filename=oauthfile,
@@ -326,6 +355,42 @@ def apply_move(ms_game: minesweeper.MinesweeperGame, command: Command,
         raise ValueError(f"Unsupported apply_move command: {command}")
 
 
+def welcome_tweet_contents(job_flags: CommandLineFlags,
+                           ms_game: minesweeper.MinesweeperGame) -> str:
+    """What to tweet when starting a game."""
+    return (_WELCOME_TWEET_TEMPLATE.format(game_num=job_flags.game_num()) +
+            _COUNTS_TEMPLATE.format(num_mines=ms_game.NumMinesTotal(),
+                                    num_flags=ms_game.NumFlagged()) +
+            "\n" +
+            ms_game.AsEmoji())
+
+
+def move_result_tweet_contents(job_flags: CommandLineFlags, move_id: int,
+                               ms_game: minesweeper.MinesweeperGame) -> str:
+    """What to tweet when you've just made a move in the game."""
+    kaboom = ("💥 KABOOM! 💥\n" if ms_game.Dead()
+              else _COUNTS_TEMPLATE.format(num_mines=ms_game.NumMinesTotal(),
+                                           num_flags=ms_game.NumFlagged()))
+    return (_MOVE_TWEET_TEMPLATE.format(
+                game_num=job_flags.game_num(),
+                move_num=move_id,
+                player=job_flags.player,
+                cmd=job_flags.command.name,
+                row=_ROW_HEADERS[job_flags.gridpoint_row].upper(),
+                col=_COL_HEADERS[job_flags.gridpoint_col].upper(),
+                maybe_kaboom=kaboom
+            ) +
+            ms_game.AsEmoji())
+
+
+def get_tweet_contents(job_flags: CommandLineFlags, move_id: int,
+                       ms_game: minesweeper.MinesweeperGame) -> str:
+    """What to tweet, for any occasion."""
+    if move_id == 0:
+        return welcome_tweet_contents(job_flags, ms_game)
+    return move_result_tweet_contents(job_flags, move_id, ms_game)
+
+
 def update_game_state(db_cursor: sqlite3.Cursor,
                       move_id: int,
                       command: Command,
@@ -361,7 +426,9 @@ def main():
                    flags.gridpoint_col)
 
     # TODO: stop printing. start tweeting!
+    tweet_contents = get_tweet_contents(flags, this_move_id, ms_game)
     print("In reply to: ", last_tweet_id)
+    print("\n-------\n\n", tweet_contents, "\n\n-------\n", sep="\n")
     ms_game.Print(include_ticks=True)
     update_game_state(db_cursor, this_move_id, flags.command,
                       flags.gridpoint_row, flags.gridpoint_col,
