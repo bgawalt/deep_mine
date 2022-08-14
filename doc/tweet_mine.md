@@ -11,7 +11,7 @@ game are encouraged to join in and shout out where to dig.
 Here's an example tweet
 ([Move 3 of Game 0](https://twitter.com/bgawalt/status/1558890063584301064)):
 
-![Screenshot of https://twitter.com/bgawalt/status/1558890063584301064](tweet_mine.png|width=250px)
+![Screenshot of https://twitter.com/bgawalt/status/1558890063584301064](tweet_mine.png)
 
 Unlike `minesweeper.py`'s `main()` routine, where game state is persisted across
 the full run of the game with a single `MinesweeperGame` object in memory, this
