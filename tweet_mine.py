@@ -171,13 +171,24 @@ _CREATE_TABLE_QUERY = """
         gridpoint_row integer,
         gridpoint_col integer,
         tweet_id text
-    )
+    );
 """
 
 _UPDATE_STATE_QUERY = """
     INSERT INTO game_state (
         move_id, command, gridpoint_row, gridpoint_col, tweet_id)
-    VALUES (?, ?, ?, ?, ?)
+    VALUES (?, ?, ?, ?, ?);
+"""
+
+_FETCH_GAME_MOVES_QUERY = """
+    SELECT
+        move_id,
+        command,
+        gridpoint_row,
+        gridpoint_col,
+        tweet_id
+    FROM game_state
+    ORDER BY move_id;
 """
 
 
@@ -262,13 +273,65 @@ def initialize_game_state(db_cursor: sqlite3.Cursor) -> None:
         "that already has a game going.") from op_err
 
 
+def load_game_state(db_cursor: sqlite3.Cursor,
+                    ms_game: minesweeper.MinesweeperGame) -> Tuple[int, str]:
+    """Fetches, validates, and applies game moves already on file.
+
+    Most of the value here is just in double checking that the moves on file
+    are sensible and reflect a valid, ongoing game.
+
+    Args:
+        db_cursor: A cursor pointing to the game state database.
+        ms_game: The current game, with mines properly seeded.
+
+    Returns:
+        First element: The next move ID expected to be inserted.
+        Second element: The tweet ID corresponding to the last move.
+    """
+    db_cursor.execute(_FETCH_GAME_MOVES_QUERY)  # Note: this ORDERS BY move_id
+    for expected_move_id, row in enumerate(db_cursor.fetchall()):
+        move_id, cmd_str, g_row, g_col, tw_id = row
+        # Ensure the move IDs are consecutive integers starting at 0:
+        if move_id != expected_move_id:
+            raise ValueError(
+                f"Expected move ID of {expected_move_id}"
+                f"but got a row like {row}"
+            )
+        # Parse the command into the nice enum version:
+        try:
+            command = Command[cmd_str.upper()]
+        except KeyError:
+            raise ValueError(f"Unrecognized command in row {row}")
+        # The first move ("move 0") is always a no-op of NEW:
+        if move_id == 0:
+            if command is not Command.NEW:
+                raise ValueError(f"Move 0 must have command NEW; got row {row}")
+            continue
+        apply_move(ms_game, command, gridpoint_row=g_row, gridpoint_col=g_col)
+        if ms_game.Dead():
+            raise RuntimeError("This game already ended (in death)!")
+        if ms_game.Won():
+            raise RuntimeError("This game already ended (in victory)!")
+    return (move_id + 1, tw_id)
+
+
+def apply_move(ms_game: minesweeper.MinesweeperGame, command: Command,
+               gridpoint_row: int, gridpoint_col: int) -> None:
+    if command is Command.DIG:
+        ms_game.Dig(gridpoint_row, gridpoint_col)
+    elif command is Command.FLAG:
+        ms_game.PlantFlag(gridpoint_row, gridpoint_col)
+    else:
+        raise ValueError(f"Unsupported apply_move command: {command}")
+
+
 def update_game_state(db_cursor: sqlite3.Cursor,
                       move_id: int,
                       command: Command,
                       gridpoint_row: int,
                       gridpoint_col: int,
                       tweet_id: str) -> None:
-    """Updates the game state table with the latest move."""
+    """Updates the DB's game state table with the latest move."""
     db_cursor.execute(
         _UPDATE_STATE_QUERY,
         (move_id, command.name, gridpoint_row, gridpoint_col, tweet_id)
@@ -281,24 +344,27 @@ def main():
 
     db_conn = sqlite3.connect(flags.sqlite_filename)
     db_cursor = db_conn.cursor()
-    seed = hash('A super secret salt; no peeking ' + flags.sqlite_filename)
-    ms_game = minesweeper.MinesweeperGame.Beginner(seed)
+    hash_target = 'A super secret salt; no peeking ' + flags.sqlite_filename
+    ms_game = minesweeper.MinesweeperGame.Beginner(seed=hash_target)
 
+    # Start with default values corresponding to a new game:
+    this_move_id = 0
+    last_tweet_id = None
     if flags.command is Command.NEW:
-        move_id = 0  # First move
         initialize_game_state(db_cursor)
         db_conn.commit()
     else:
-        # TODO:
-        #   - load old moves
-        #   - apply old moves
-        #   - apply new move
-        raise NotImplementedError('All things in time')
+        this_move_id, last_tweet_id = load_game_state(db_cursor, ms_game)
+        # Update these values away from the "new game" defaults:
+        apply_move(ms_game, flags.command, flags.gridpoint_row,
+                   flags.gridpoint_col)
 
     # TODO: stop printing. start tweeting!
+    print("In reply to: ", last_tweet_id)
     ms_game.Print(include_ticks=True)
-    update_game_state(db_cursor, move_id, flags.command, flags.gridpoint_row,
-                      flags.gridpoint_col, 'NO TWEETS YET!!')
+    update_game_state(db_cursor, this_move_id, flags.command,
+                      flags.gridpoint_row, flags.gridpoint_col,
+                      'Not tweeting yet.')
     db_conn.commit()
     db_conn.close()
 

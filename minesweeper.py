@@ -101,7 +101,7 @@ class MinesweeperGame(object):
             raise ValueError("Can't plant a flag outside the board")
         self.board[(row, col)] = CellValue.FLAG
         self.flag_count += 1
-        self.recently_poked.append(row, col)
+        self.recently_poked.append((row, col))
 
     def Dig(self, row, col):
         """Returns True iff you dig a *new* hole and survive."""
