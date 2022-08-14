@@ -3,9 +3,10 @@
 A suite that takes the game of
 [Minesweeper](https://en.wikipedia.org/wiki/Minesweeper_(video_game)) and:
 
-1.  Plays it on the command line
-2.  Plays it on Twitter
+1.  Plays it on the command line ([`minesweeper.py`](doc/minesweeper.py))
+2.  Plays it on Twitter ([`tweet_mine.py`](doc/tweet_mine.py))
 3.  Machine-learns an agent that can play on its own
+    ([`deep_mine.py`](doc/deep_mine.py))
 
 The original goal was (3) but it turns out (1) and (2) were fun waypoints to
 explore and build out!  So (1) and (2) are done, but (3) is still a
@@ -52,7 +53,7 @@ where using the character `m` for `difficulty` launches a medium-difficulty
 game, and `h` launches a hard game. (Any other character, or omitting the
 character, launches the default: an easy game.)
 
-See [minesweeper.md](doc/minesweeper.py) for more details.
+See [minesweeper.md](doc/minesweeper.md) for a full explainer.
 
 
 ## `tweet_mine.py`
