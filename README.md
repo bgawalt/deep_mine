@@ -8,13 +8,17 @@ A suite that takes the game of
 3.  Machine-learns an agent that can play on its own
 
 The original goal was (3) but it turns out (1) and (2) were fun waypoints to
-explore and build out!  So (1) is done, but (2) and (3) are still
-works-in-progress.
+explore and build out!  So (1) and (2) are done, but (3) is still a
+work-in-progress.
 
 ## Setup
 
 I'm running this on my fairly-old Macbook Pro.  I did some wrangling with
-Homebrew to get Python 3.7 running.  From there, I set up a blank virtual
+Homebrew to get Python 3.9 running.   As far as I can tell, there are no
+additional/non-standard libraries needed for`minesweeper.py` and `tweet_mine.py`
+to function.
+
+To use the not-yet-completed `deep_mine.py`, I set up a blank virtual
 environment and installed Scikit Learn and Pillow:
 
 ```
@@ -22,7 +26,7 @@ pip install -U scikit-learn
 pip install Pillow
 ```
 
-In total, the environment looks like:
+In total, that environment looks like:
 
 ```
 $ pip freeze
@@ -83,10 +87,7 @@ Some more details on the `MinesweeperGame`
 ## `tweet_mine.py`
 
 The file `tweet_mine.py` provides a way to play Minesweeper on a Twitter
-account.
-
-See the file-level docstring for details on how this works. (I'll copy details
-here once everything's "production ready.")
+account.  See [tweet_mine.md](doc/tweet_mine.md) for a full explainer.
 
 
 ## `deep_mine.py`
@@ -127,7 +128,7 @@ a smart-enough agent benefitting from that capability.
 
 `deep_mine.py` only has one true agent implemented right now: `DeepMineRandom`.
 Its `MineProbability` method just picks random values between 0 and 1 and
-totally ignores any information you provide it.
+totally ignores any neighborhood information you provide it.
 
 There's another class, `DeepMineLearner`, which currently has a method for
 fetching and parsing training data out of the Dig History table.  This will
@@ -135,13 +136,15 @@ serve as a base on which ML-backed agents are implemented.
 
 ## Coming soon
 
-*   Support flag-planting on the part of the agents
+*   Support flag-planting on the part of the DeepMine agents
 *   More and better DeepMine agents, which can read the Dig History table and
     train a `MineProbability` model.  Easy models I have in mind:
     *   Decision trees
     *   Logistic regression with some kind of polynomial kernel
     *   Anything else that seems to be just sitting around in SciKit Learn
-*   Add a method to `MinesweeperGame` that renders the current board as a PNG
+*   Add a method to `MinesweeperGame` that renders the current board as a PNG.
+    ("Render as Emoji" was added to support tweeting, but that doesn't scale
+    well past the 8x8 beginner board size.)
 *   The Dig History table is really inefficient in terms of storing
     neighborhoods, I could make it 5x smaller by just hacking together an
     integer representation of a neighborhood
