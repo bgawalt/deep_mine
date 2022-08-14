@@ -204,7 +204,7 @@ Reply with 'dig A,K' or 'flag D,Q'.
 
 _MOVE_TWEET_TEMPLATE = """#Minesweeper Game {game_num}, Move {move_num}:
 @{player} says: '{cmd} at {row}, {col}!'
-{maybe_kaboom}
+{results}
 """
 
 _COUNTS_TEMPLATE = "Mines: {num_mines} ({num_flags} flags):\n"
@@ -364,9 +364,13 @@ def welcome_tweet_contents(job_flags: CommandLineFlags,
 def move_result_tweet_contents(job_flags: CommandLineFlags, move_id: int,
                                ms_game: minesweeper.MinesweeperGame) -> str:
     """What to tweet when you've just made a move in the game."""
-    kaboom = ("💥 KABOOM! 💥\n" if ms_game.Dead()
-              else _COUNTS_TEMPLATE.format(num_mines=ms_game.NumMinesTotal(),
-                                           num_flags=ms_game.NumFlagged()))
+    if ms_game.Dead():
+        results = "💥 KABOOM! 💥\n"
+    elif ms_game.Won():
+        results = "🎉 YOU WIN! 🎉\n"
+    else:
+        results = _COUNTS_TEMPLATE.format(num_mines=ms_game.NumMinesTotal(),
+                                          num_flags=ms_game.NumFlagged())
     return (_MOVE_TWEET_TEMPLATE.format(
                 game_num=job_flags.game_num(),
                 move_num=move_id,
@@ -374,7 +378,7 @@ def move_result_tweet_contents(job_flags: CommandLineFlags, move_id: int,
                 cmd=job_flags.command.name,
                 row=_ROW_HEADERS[job_flags.gridpoint_row].upper(),
                 col=_COL_HEADERS[job_flags.gridpoint_col].upper(),
-                maybe_kaboom=kaboom
+                results=results
             ) +
             ms_game.AsEmoji())
 
