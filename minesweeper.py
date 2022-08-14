@@ -14,6 +14,7 @@ import enum
 import sys
 import random
 
+
 @enum.unique
 class CellValue(enum.Enum):
     """Non-numeric values that can be held by a game cell."""
@@ -33,6 +34,7 @@ _TWEET_COL_HEADER = (
     "".join(chr(u) for u in
             (0x1f1ee, 0x1f1ef, 0x1f1f0, 0x1f1f1,
              0x1f1f3, 0x1f1f6, 0x1f1f7, 0x1f1f9)) + "\n")
+
 
 def _DisplayCell(cell_value, use_emoji=False):
     """Single character to display for the given cell_value."""
@@ -164,6 +166,9 @@ class MinesweeperGame(object):
                 else:
                     vals.append(int(CellValue.OUT_OF_BOUNDS))
         return vals
+
+    def NumFlagged(self):
+        return self.flag_count
 
     def NumUnflagged(self):
         return len(self.mine_positions) - self.flag_count
