@@ -198,20 +198,16 @@ _FETCH_GAME_MOVES_QUERY = """
     ORDER BY move_id;
 """
 
-_WELCOME_TWEET_TEMPLATE = """Welcome to #Minesweeper, Game {game_num}!
-
-To play along, reply to this thread with instructions like 'dig at A,N'
-or 'flag at B,Q'.
-
+_WELCOME_TWEET_TEMPLATE = """It's #Minesweeper, Game {game_num}!
+Reply with 'dig A,K' or 'flag D,Q'.
 """
 
 _MOVE_TWEET_TEMPLATE = """#Minesweeper Game {game_num}, Move {move_num}:
-   @{player} says: '{cmd} at {row}, {col}!'
-
+@{player} says: '{cmd} at {row}, {col}!'
 {maybe_kaboom}
 """
 
-_COUNTS_TEMPLATE = """{num_mines} mines; {num_flags} flags placed:\n"""
+_COUNTS_TEMPLATE = "Mines: {num_mines} ({num_flags} flags):\n"
 
 
 @enum.unique
@@ -425,14 +421,27 @@ def main():
         apply_move(ms_game, flags.command, flags.gridpoint_row,
                    flags.gridpoint_col)
 
-    # TODO: stop printing. start tweeting!
     tweet_contents = get_tweet_contents(flags, this_move_id, ms_game)
-    print("In reply to: ", last_tweet_id)
-    print("\n-------\n\n", tweet_contents, "\n\n-------\n", sep="\n")
-    ms_game.Print(include_ticks=True)
+    print(len(tweet_contents))
+    print(tweet_contents)
+    request_data = {'status': tweet_contents}
+    if last_tweet_id is not None:
+        request_data['in_reply_to_status_id'] = last_tweet_id
+        request_data['auto_populate_reply_metadata'] = True
+    resp = requests.post(url=POST_TWEET_URL, data=request_data, auth=oauth)
+    if not resp.ok:
+        print(resp.text)
+    resp.raise_for_status()
+    this_tweet_id = resp.json().get('id_str', None)
+    print(f'Twitter response: {resp.status_code} {resp.reason};',
+          f'Tw. ID {this_tweet_id}')
+    if this_tweet_id is None:
+        print(resp.text)
+        raise RuntimeError("For some reason, tweeting failed!!")
+
     update_game_state(db_cursor, this_move_id, flags.command,
                       flags.gridpoint_row, flags.gridpoint_col,
-                      'Not tweeting yet.')
+                      this_tweet_id)
     db_conn.commit()
     db_conn.close()
 
