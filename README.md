@@ -3,10 +3,10 @@
 A suite that takes the game of
 [Minesweeper](https://en.wikipedia.org/wiki/Minesweeper_(video_game)) and:
 
-1.  Plays it on the command line ([`minesweeper.py`](doc/minesweeper.py))
-2.  Plays it on Twitter ([`tweet_mine.py`](doc/tweet_mine.py))
+1.  Plays it on the command line ([`minesweeper.py`](doc/minesweeper.md))
+2.  Plays it on Twitter ([`tweet_mine.py`](doc/tweet_mine.md))
 3.  Machine-learns an agent that can play on its own
-    ([`deep_mine.py`](doc/deep_mine.py))
+    ([`deep_mine.py`](doc/deep_mine.md))
 
 The original goal was (3) but it turns out (1) and (2) were fun waypoints to
 explore and build out!  So (1) and (2) are done, but (3) is still a
