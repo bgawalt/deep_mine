@@ -11,7 +11,7 @@ game are encouraged to join in and shout out where to dig.
 Here's an example tweet
 ([Move 3 of Game 0](https://twitter.com/bgawalt/status/1558890063584301064)):
 
-![Screenshot of https://twitter.com/bgawalt/status/1558890063584301064](tweet_mine.png)
+![Screenshot of https://twitter.com/bgawalt/status/1558890063584301064](tweet_mine.png|width=250)
 
 Unlike `minesweeper.py`'s `main()` routine, where game state is persisted across
 the full run of the game with a single `MinesweeperGame` object in memory, this
@@ -162,7 +162,7 @@ the row headers.
 For the column-header emoji, though: they necessarily all appear on the same
 line.  By trial and error, I found that the sequence:
 
-    \[I, J, K, L, N, Q, R, T\]
+    [I, J, K, L, N, Q, R, T]
 
 never produces an ordered pair that collapses into a recognized two-letter
 region code.  (For instance, trying to make consecutive columns N and O would
