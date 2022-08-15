@@ -84,7 +84,7 @@ _MOVE_TWEET_TEMPLATE = """#Minesweeper Game {game_num}, Move {move_num}:
 {results}
 """
 
-_COUNTS_TEMPLATE = "Mines: {num_mines} ({num_flags} flags):\n"
+_COUNTS_TEMPLATE = "Mines: {num_mines} ({num_flags} flag{flag_plural}):\n"
 
 
 @enum.unique
@@ -232,8 +232,10 @@ def welcome_tweet_contents(job_flags: CommandLineFlags,
                            ms_game: minesweeper.MinesweeperGame) -> str:
     """What to tweet when starting a game."""
     return (_WELCOME_TWEET_TEMPLATE.format(game_num=job_flags.game_num()) +
-            _COUNTS_TEMPLATE.format(num_mines=ms_game.NumMinesTotal(),
-                                    num_flags=ms_game.NumFlagged()) +
+            _COUNTS_TEMPLATE.format(
+                num_mines=ms_game.NumMinesTotal(),
+                num_flags=ms_game.NumFlagged(),
+                flag_plural=("" if ms_game.NumFlagged() == 1 else "s")) +
             "\n" +
             ms_game.AsEmoji())
 
@@ -246,8 +248,9 @@ def move_result_tweet_contents(job_flags: CommandLineFlags, move_id: int,
     elif ms_game.Won():
         results = "🎉 YOU WIN! 🎉\n"
     else:
-        results = _COUNTS_TEMPLATE.format(num_mines=ms_game.NumMinesTotal(),
-                                          num_flags=ms_game.NumFlagged())
+        results = _COUNTS_TEMPLATE.format(
+            num_mines=ms_game.NumMinesTotal(), num_flags=ms_game.NumFlagged(),
+            flag_plural=("" if ms_game.NumFlagged() == 1 else "s"))
     return (_MOVE_TWEET_TEMPLATE.format(
                 game_num=job_flags.game_num(),
                 move_num=move_id,
