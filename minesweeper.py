@@ -58,6 +58,7 @@ class MinesweeperGame(object):
         self.num_cols = num_cols
         self.dead = False
         # Choose random mine positions
+        # TODO: Use a `random.Random` generator instead.
         random.seed(seed)
         self.mine_positions = set(
             random.sample([(row, col) for row in range(num_rows)

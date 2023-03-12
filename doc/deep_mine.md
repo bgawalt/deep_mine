@@ -45,23 +45,13 @@ serve as a base on which ML-backed agents are implemented.
 ## Dependencies
 
 To use this not-yet-completed `deep_mine.py`, I set up a blank virtual
-environment and installed Scikit Learn and Pillow:
+environment and installed Scikit Learn:
 
 ```
 pip install -U scikit-learn
-pip install Pillow
 ```
 
-In total, that environment looks like:
-
-```
-$ pip freeze
-joblib==0.13.2
-numpy==1.16.4
-Pillow==6.1.0
-scikit-learn==0.21.2
-scipy==1.3.0
-```
+but I'm not doing anything with it yet.
 
 ## Coming soon
 

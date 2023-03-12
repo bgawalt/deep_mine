@@ -16,28 +16,20 @@ work-in-progress.
 
 I'm running this on my fairly-old Macbook Pro.  I did some wrangling with
 Homebrew to get Python 3.9 running.   As far as I can tell, there are no
-additional/non-standard libraries needed for`minesweeper.py` and `tweet_mine.py`
-to function.
+additional/non-standard libraries needed for `minesweeper.py` and
+`tweet_mine.py` to function.
 
-To use the not-yet-completed `deep_mine.py`, I set up a blank virtual
-environment and installed Scikit Learn and Pillow:
+`masto_mine.py` *does* need `Mastodon.py`:
+
+```
+$ pip3 install Mastodon.py
+```
+
+To use the not-yet-completed `deep_mine.py`, you'll someday need Scikit Learn:
 
 ```
 pip install -U scikit-learn
-pip install Pillow
 ```
-
-In total, that environment looks like:
-
-```
-$ pip freeze
-joblib==0.13.2
-numpy==1.16.4
-Pillow==6.1.0
-scikit-learn==0.21.2
-scipy==1.3.0
-```
-
 
 ## `minesweeper.py`
 
@@ -56,10 +48,24 @@ character, launches the default: an easy game.)
 See [minesweeper.md](doc/minesweeper.md) for a full explainer.
 
 
+## `masto_mine.py`
+
+The file `masto_mine.py` let's you play a long-running series of 8x8 games
+on a Mastodon account.  (Mine is going to run at `@minesweeper@botsin.space`.)
+
+It's not done yet!  It can track serial game state in a local SQLite file,
+but it's not trying to fedipost yet.
+
+See [masto_mine.py](doc/masto_mine.md) for a full explainer.
+
+
 ## `tweet_mine.py`
 
 The file `tweet_mine.py` provides a way to play Minesweeper on a Twitter
 account.
+
+This may no longer work -- the Twitter API is in a weird place as of this
+writing, and my use of the site is on hold for the foreseeable future.
 
 See [tweet_mine.md](doc/tweet_mine.md) for a full explainer.
 
