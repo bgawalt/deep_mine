@@ -85,16 +85,18 @@ _LATEST_GAME_QUERY = """
     ORDER BY move_id;
 """
 
-_WELCOME_TWEET_TEMPLATE = """Welcome to a #NewGame of #Minesweeper, Game {game_num}!
+_WELCOME_TWEET_TEMPLATE = """Welcome to a #NewGame of #Minesweeper!
 Tell this bot what move to make: reply with 'dig A,K' or 'flag D,Q'.
+
+Game {game_num}
 """
 
 _MOVE_TWEET_TEMPLATE = """#Minesweeper Game {game_num}, Move {move_num}:
-@{player} says: '{cmd} at {row}, {col}!'
+{player} says: '{cmd} at {row}, {col}!'
 {results}
 """
 
-_COUNTS_TEMPLATE = "Mines: {num_mines} ({num_flags} flag{flag_plural}):\n"
+_COUNTS_TEMPLATE = "Mines: {num_mines}\nFlags: {num_flags}\n"
 
 
 @enum.unique
@@ -106,18 +108,19 @@ class Command(enum.Enum):
 
 
 @dataclasses.dataclass(frozen=True)
-class PrevGameState:
-    """State of play as of the most recent move on file."""
+class GameState:
+    """A game's state of play."""
     game: minesweeper.MinesweeperGame
     game_id: int
-    prev_move_id: int  # This is -1 when no move's been made yet in this game.
-    prev_post_id: str  # This is empty when no move's been made yet.
+    move_id: int  # This is -1 when no move's been made yet in this game.
+    post_id: str  # This is empty when no move's been made yet.
 
 
 @dataclasses.dataclass(frozen=True)
 class GameMove:
     """Move to make in Minesweeper."""
     command: Command
+    move_maker: str
     gridpoint_row: int
     gridpoint_col: int
 
@@ -127,7 +130,7 @@ def game_seed(db_filename: str, game_id: int) -> str:
 
 
 def load_game_state(
-    db_cursor: sqlite3.Cursor, db_filename: str) -> PrevGameState:
+    db_cursor: sqlite3.Cursor, db_filename: str) -> GameState:
     """Fetches the last game, game ID, and move ID entered in this DB file.
 
     Args:
@@ -146,8 +149,8 @@ def load_game_state(
         move_id = -1
         game = minesweeper.MinesweeperGame.Beginner(
             seed=game_seed(db_filename=db_filename, game_id=game_id))
-        return PrevGameState(
-            game=game, game_id=game_id, prev_move_id=move_id, prev_post_id="")
+        return GameState(
+            game=game, game_id=game_id, move_id=move_id, post_id="")
     for expected_move_id, row in enumerate(rows):
         row_game_id, move_id, cmd_str, g_row, g_col, post_id = row
         if game_id is None:
@@ -179,10 +182,10 @@ def load_game_state(
         move_id = -1
         game = minesweeper.MinesweeperGame.Beginner(
             seed=game_seed(db_filename=db_filename, game_id=game_id))
-        return PrevGameState(
-            game=game, game_id=game_id, prev_move_id=move_id, prev_post_id="")
-    return PrevGameState(
-        game=game, game_id=game_id, prev_move_id=move_id, prev_post_id=post_id)
+        return GameState(
+            game=game, game_id=game_id, move_id=move_id, post_id="")
+    return GameState(
+        game=game, game_id=game_id, move_id=move_id, post_id=post_id)
 
 
 def apply_move(ms_game: minesweeper.MinesweeperGame, command: Command,
@@ -196,59 +199,57 @@ def apply_move(ms_game: minesweeper.MinesweeperGame, command: Command,
         raise ValueError(f"Unsupported apply_move command: {command}")
 
 
-def calculate_next_move(game_state: PrevGameState) -> GameMove:
-    if game_state.prev_move_id == -1:
-        return GameMove(command=Command.NEW, gridpoint_row=0, gridpoint_col=0)
+def calculate_next_move(game_state: GameState) -> GameMove:
+    if game_state.move_id == -1:
+        return GameMove(command=Command.NEW, move_maker="",
+                        gridpoint_row=0, gridpoint_col=0)
     # TODO: Try to load and parse replies to bot's previous post.
     random.seed(time.time())
     return GameMove(
         command=(Command.DIG if random.random() < 0.5 else Command.FLAG),
+        move_maker="Guessing randomly...",
         gridpoint_row=random.randint(0, 7),
         gridpoint_col=random.randint(0, 7))
 
 
 # TODO: Start posting someday
-def welcome_post_contents(
-    job_flags: CommandLineFlags, ms_game: minesweeper.MinesweeperGame) -> str:
+def welcome_post_contents(game_state: GameState) -> str:
     """What to post when starting a game."""
-    return (_WELCOME_TWEET_TEMPLATE.format(game_num=job_flags.game_num()) +
+    return (_WELCOME_TWEET_TEMPLATE.format(game_num=game_state.game_id) +
             _COUNTS_TEMPLATE.format(
-                num_mines=ms_game.NumMinesTotal(),
-                num_flags=ms_game.NumFlagged(),
-                flag_plural=("" if ms_game.NumFlagged() == 1 else "s")) +
-            "\n" +
-            ms_game.AsEmoji())
+                num_mines=game_state.game.NumMinesTotal(),
+                num_flags=game_state.game.NumFlagged(),
+            ) + "\n" +
+            game_state.game.AsEmoji())
 
 
-def move_result_post_contents(job_flags: CommandLineFlags, move_id: int,
-                               ms_game: minesweeper.MinesweeperGame) -> str:
+def move_result_post_contents(game_state: GameState, move: GameMove) -> str:
     """What to post when you've just made a move in the game."""
-    if ms_game.Dead():
+    if game_state.game.Dead():
         results = "💥 KABOOM! 💥\n"
-    elif ms_game.Won():
+    elif game_state.game.Won():
         results = "🎉 WE WIN! 🎉\n"
     else:
         results = _COUNTS_TEMPLATE.format(
-            num_mines=ms_game.NumMinesTotal(), num_flags=ms_game.NumFlagged(),
-            flag_plural=("" if ms_game.NumFlagged() == 1 else "s"))
+            num_mines=game_state.game.NumMinesTotal(),
+            num_flags=game_state.game.NumFlagged())
     return (_MOVE_TWEET_TEMPLATE.format(
-                game_num=job_flags.game_num(),
-                move_num=move_id,
-                player=job_flags.player,
-                cmd=job_flags.command.name,
-                row=_ROW_HEADERS[job_flags.gridpoint_row].upper(),
-                col=_COL_HEADERS[job_flags.gridpoint_col].upper(),
+                game_num=game_state.game_id,
+                move_num=game_state.move_id,
+                player=move.move_maker,
+                cmd=move.command.name,
+                row=_ROW_HEADERS[move.gridpoint_row].upper(),
+                col=_COL_HEADERS[move.gridpoint_col].upper(),
                 results=results
             ) +
-            ms_game.AsEmoji())
+            game_state.game.AsEmoji())
 
 
-def get_post_contents(job_flags: CommandLineFlags, move_id: int,
-                       ms_game: minesweeper.MinesweeperGame) -> str:
+def get_post_contents(game_state: GameState, move: GameMove) -> str:
     """What to post, for any occasion."""
-    if move_id == 0:
-        return welcome_post_contents(job_flags, ms_game)
-    return move_result_post_contents(job_flags, move_id, ms_game)
+    if game_state.move_id == 0:
+        return welcome_post_contents(game_state)
+    return move_result_post_contents(game_state, move)
 
 
 def update_game_state(db_cursor: sqlite3.Cursor,
@@ -277,7 +278,7 @@ def main():
     prev_game_state = load_game_state(db_cursor, db_filename)
     game_id = prev_game_state.game_id
     ms_game = prev_game_state.game
-    this_move_id = prev_game_state.prev_move_id + 1
+    this_move_id = prev_game_state.move_id + 1
 
     this_move = calculate_next_move(prev_game_state)
     if this_move.command is not Command.NEW:
@@ -285,8 +286,10 @@ def main():
                    command=this_move.command,
                    gridpoint_row=this_move.gridpoint_row,
                    gridpoint_col=this_move.gridpoint_col)
-    print(f"Game {game_id}; Move {this_move_id}:\n{this_move}\n")
-    ms_game.Print()
+    this_game_state = GameState(
+        game=ms_game, game_id=game_id, move_id=this_move_id, post_id=""
+    )
+    print(get_post_contents(this_game_state, this_move))
 
     # No posting, yet.
     """
