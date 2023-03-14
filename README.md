@@ -56,7 +56,7 @@ on a Mastodon account.  (Mine is going to run at `@minesweeper@botsin.space`.)
 It's not done yet!  It can track serial game state in a local SQLite file,
 but it's not trying to fedipost yet.
 
-See [masto_mine.py](doc/masto_mine.md) for a full explainer.
+See [masto_mine.md](doc/masto_mine.md) for a full explainer.
 
 
 ## `tweet_mine.py`
