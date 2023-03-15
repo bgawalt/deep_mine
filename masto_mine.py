@@ -36,16 +36,14 @@ from __future__ import annotations
 
 import dataclasses
 import enum
-import json
-import minesweeper
 import random
 import sqlite3
 import sys
 import time
 
-from collections.abc import Sequence
-
 from mastodon import Mastodon
+
+import minesweeper
 
 
 # ASCII form of the game board's row and column header letters:
@@ -53,6 +51,8 @@ _ROW_HEADERS = ('a', 'b', 'c', 'd', 'e', 'f', 'g', 'h')
 _COL_HEADERS = ('i', 'j', 'k', 'l', 'n', 'q', 'r', 't')
 
 
+# Note that `post_id` is a string, but we'll use it to base-10 encode the
+# integer value returned by our Mastodon client.
 _CREATE_TABLE_QUERY = """
     CREATE TABLE IF NOT EXISTS games (
         game_id INTEGER,
@@ -145,14 +145,13 @@ def load_game_state(
     game = None
     game_id = None
     if not rows:
-        game_id = 1
-        move_id = -1
         game = minesweeper.MinesweeperGame.Beginner(
             seed=game_seed(db_filename=db_filename, game_id=game_id))
         return GameState(
-            game=game, game_id=game_id, move_id=move_id, post_id="")
+            game=game, game_id=1, move_id=(-1), post_id="")
     for expected_move_id, row in enumerate(rows):
         row_game_id, move_id, cmd_str, g_row, g_col, post_id = row
+        assert post_id.isdigit()
         if game_id is None:
             game_id = row_game_id
             game = minesweeper.MinesweeperGame.Beginner(
@@ -178,12 +177,10 @@ def load_game_state(
         assert command is not Command.NEW
         apply_move(game, command, gridpoint_row=g_row, gridpoint_col=g_col)
     if game.Dead() or game.Won():
-        game_id += 1
-        move_id = -1
         game = minesweeper.MinesweeperGame.Beginner(
             seed=game_seed(db_filename=db_filename, game_id=game_id))
         return GameState(
-            game=game, game_id=game_id, move_id=move_id, post_id="")
+            game=game, game_id=(game_id + 1), move_id=(-1), post_id="")
     return GameState(
         game=game, game_id=game_id, move_id=move_id, post_id=post_id)
 
@@ -199,6 +196,16 @@ def apply_move(ms_game: minesweeper.MinesweeperGame, command: Command,
         raise ValueError(f"Unsupported apply_move command: {command}")
 
 
+def parse_move_from_post(post_contents: str) -> Optional[GameMove]:
+    """Tries to extract a valid move from a Masto post's contents."""
+    return None
+
+
+def parse_move_from_replies(prev_game_post: str) -> Optional[GameMove]:
+    """Fetches replies to given Masto post and parses them for valid moves."""
+    return None
+
+
 def calculate_next_move(game_state: GameState) -> GameMove:
     if game_state.move_id == -1:
         return GameMove(command=Command.NEW, move_maker="",
@@ -206,13 +213,12 @@ def calculate_next_move(game_state: GameState) -> GameMove:
     # TODO: Try to load and parse replies to bot's previous post.
     random.seed(time.time())
     return GameMove(
-        command=(Command.DIG if random.random() < 0.5 else Command.FLAG),
-        move_maker="Guessing randomly...",
+        command=(Command.DIG if random.random() < 0.8 else Command.FLAG),
+        move_maker="The bot, guessing at random,",
         gridpoint_row=random.randint(0, 7),
         gridpoint_col=random.randint(0, 7))
 
 
-# TODO: Start posting someday
 def welcome_post_contents(game_state: GameState) -> str:
     """What to post when starting a game."""
     return (_WELCOME_TWEET_TEMPLATE.format(game_num=game_state.game_id) +
@@ -255,24 +261,25 @@ def get_post_contents(game_state: GameState, move: GameMove) -> str:
 def update_game_state(db_cursor: sqlite3.Cursor,
                       game_id: int,
                       move_id: int,
-                      command: Command,
-                      gridpoint_row: int,
-                      gridpoint_col: int,
+                      move: GameMove,
                       post_id: str) -> None:
     """Updates the DB's game state table with the latest move."""
     db_cursor.execute(
         _UPDATE_STATE_QUERY,
-        (game_id, move_id, command.name.lower(),
-         gridpoint_row, gridpoint_col, post_id)
+        (game_id, move_id, move.command.name.lower(),
+         move.gridpoint_row, move.gridpoint_col, post_id)
     )
 
 
 def main():
+    # Set up a connection to the SQLite database file:
     db_filename = sys.argv[1]
-    mdn_creds_filename = sys.argv[2]
-
     db_conn = sqlite3.connect(db_filename)
     db_cursor = db_conn.cursor()
+    # Set up the Mastodon client:
+    mdn_creds_filename = sys.argv[2]
+    md = Mastodon(access_token=mdn_creds_filename)
+
     db_cursor.execute(_CREATE_TABLE_QUERY)
 
     prev_game_state = load_game_state(db_cursor, db_filename)
@@ -287,34 +294,23 @@ def main():
                    gridpoint_row=this_move.gridpoint_row,
                    gridpoint_col=this_move.gridpoint_col)
     this_game_state = GameState(
-        game=ms_game, game_id=game_id, move_id=this_move_id, post_id=""
+        game=ms_game, game_id=game_id, move_id=this_move_id,
+        post_id=""  # We can't populate this right now -- we haven't posted yet.
     )
-    print(get_post_contents(this_game_state, this_move))
+    this_post_contents = get_post_contents(this_game_state, this_move)
+    reply_to = (
+        None if not prev_game_state.post_id else int(prev_game_state.post_id))
+    print(reply_to)
 
-    # No posting, yet.
-    """
-    post_contents = get_post_contents(flags, this_move_id, ms_game)
-    print(len(post_contents))
-    print(post_contents)
-    request_data = {'status': post_contents}
-    if last_post_id is not None:
-        request_data['in_reply_to_status_id'] = last_post_id
-        request_data['auto_populate_reply_metadata'] = True
-    resp = requests.post(url=POST_TWEET_URL, data=request_data, auth=oauth)
-    if not resp.ok:
-        print(resp.text)
-    resp.raise_for_status()
-    this_post_id = resp.json().get('id_str', None)
-    print(f'Twitter response: {resp.status_code} {resp.reason};',
-          f'Tw. ID {this_post_id}')
-    if this_post_id is None:
-        print(resp.text)
-        raise RuntimeError("For some reason, posting failed!!")
-    """
+    this_post_response = md.status_post(
+        status=this_post_contents,
+        visibility='public',
+        in_reply_to_id=reply_to
+    )
+    print(this_move)
 
-    update_game_state(db_cursor, game_id, this_move_id, this_move.command,
-                      this_move.gridpoint_row, this_move.gridpoint_col,
-                      "")
+    update_game_state(db_cursor, game_id, this_move_id, this_move,
+                      str(this_post_response['id']))
     db_conn.commit()
     db_conn.close()
 
