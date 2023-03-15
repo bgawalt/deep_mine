@@ -48,7 +48,7 @@ import minesweeper
 
 # ASCII form of the game board's row and column header letters:
 _ROW_HEADERS = ('a', 'b', 'c', 'd', 'e', 'f', 'g', 'h')
-_COL_HEADERS = ('i', 'j', 'k', 'l', 'n', 'q', 'r', 't')
+_COL_HEADERS = ('i', 'j', 'k', 'l', 'm', 'n', 'o', 'p')
 
 
 # Note that `post_id` is a string, but we'll use it to base-10 encode the
@@ -198,11 +198,13 @@ def apply_move(ms_game: minesweeper.MinesweeperGame, command: Command,
 
 def parse_move_from_post(post_contents: str) -> Optional[GameMove]:
     """Tries to extract a valid move from a Masto post's contents."""
+    # TODO: Try to load and parse replies to bot's previous post.
     return None
 
 
 def parse_move_from_replies(prev_game_post: str) -> Optional[GameMove]:
     """Fetches replies to given Masto post and parses them for valid moves."""
+    # TODO: Try to load and parse replies to bot's previous post.
     return None
 
 
@@ -298,6 +300,7 @@ def main():
         post_id=""  # We can't populate this right now -- we haven't posted yet.
     )
     this_post_contents = get_post_contents(this_game_state, this_move)
+    print(this_post_contents)
     reply_to = (
         None if not prev_game_state.post_id else int(prev_game_state.post_id))
     print(reply_to)

@@ -28,13 +28,9 @@ class CellValue(enum.Enum):
         return self.value[2]
 
 _NUMERIC_EMOJI = tuple(["🟫", "1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣"])
-_TWEET_ROW_INDICES = tuple(chr(0x1f1e6 + i) for i in range(8))
+_TWEET_ROW_INDICES = tuple(chr(0x1d670 + i) + "  " for i in range(8))
 _TWEET_COL_HEADER = (
-    "🟦" +
-    "".join(chr(u) for u in
-            (0x1f1ee, 0x1f1ef, 0x1f1f0, 0x1f1f1,
-             0x1f1f3, 0x1f1f6, 0x1f1f7, 0x1f1f9)) + "\n")
-
+    "  - " + " | ".join(chr(0x1d670 + i) for i in range(8, 16)) + "\n")
 
 def _DisplayCell(cell_value, use_emoji=False):
     """Single character to display for the given cell_value."""
